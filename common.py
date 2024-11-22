@@ -2,7 +2,7 @@ import cv2
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
 
 
 IMAGE_DIR = 'data/images'
@@ -41,3 +41,15 @@ def split_data(df):
     y = df['class']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
     return X_train, X_test, y_train, y_test
+
+def validation_scores(pipe, param_grid, X_train, y_train):
+    """ Create, run, and return cv_results_ for grid searches for all 3 scoring options """
+    scorers = ['accuracy', 'roc_auc', 'f1']
+    # StratifiedKFold will ensure an equal distribution of the target classes
+    skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
+    results = {}
+    for scorer in scorers:
+        grid_search = GridSearchCV(pipe, param_grid, cv=skf, scoring=scorer)
+        grid_search.fit(X_train, y_train)
+        results[scorer] = pd.DataFrame(grid_search.cv_results_)
+    return results
