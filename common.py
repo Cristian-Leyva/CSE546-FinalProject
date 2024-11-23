@@ -2,6 +2,7 @@ import cv2
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.metrics import make_scorer, f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
 
 
@@ -33,31 +34,42 @@ def load_data():
     df1 = pd.read_csv('data/Data.csv')
     df2 = pd.read_csv('data/extra_hard_samples.csv')
     df = pd.concat([df1, df2], axis=0).reset_index(drop=True)
+    # Encoding classes to an index number
+    mapping = {label: index for index, label in enumerate(df['class'].unique())}
+    # Add a column for the class index
+    df['class_index'] = [mapping[class_name] for class_name in df['class']]
     return df
 
 def split_data(df):
     """ Split data into X/y training and testing sets from `amount` of total data """
-    X = df.drop(['image_name', 'class'], axis=1)
-    y = df['class']
+    X = df.drop(['image_name', 'class', 'class_index'], axis=1)
+    y = df['class_index']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
     return X_train, X_test, y_train, y_test
 
 def validation_scores(pipe, param_grid, X_train, y_train):
     """ Create, run, and return cv_results_ for grid searches for all 3 scoring options """
-    scorers = ['accuracy', 'roc_auc', 'f1']
+    scorers = {
+        'accuracy': 'accuracy',
+        'roc_auc': make_scorer(
+            roc_auc_score, multi_class='ovr', needs_proba=True
+        ),
+        'f1_score': make_scorer(f1_score, average='weighted')
+    }
     # StratifiedKFold will ensure an equal distribution of the target classes
     skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
     results = {}
-    for scorer in scorers:
+    for name, scorer in scorers.items():
         grid_search = GridSearchCV(estimator=pipe, param_grid=param_grid, cv=skf, scoring=scorer)
         grid_search.fit(X_train, y_train)
-        results[scorer] = pd.DataFrame(grid_search.cv_results_)
+        results[name] = pd.DataFrame(grid_search.cv_results_)
     return results
 
 
 if __name__ == '__main__':
     from sklearn.preprocessing import StandardScaler
     from sklearn.svm import SVC
+    
     from sklearn.pipeline import make_pipeline
 
     df = load_data()
@@ -66,7 +78,7 @@ if __name__ == '__main__':
 
     pipe = make_pipeline(
         StandardScaler(),
-        SVC(random_state=0)
+        SVC(random_state=0, probability=True)
     )
     param_grid = {
         'svc__C': [0.1, 1]
