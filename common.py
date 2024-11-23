@@ -49,7 +49,7 @@ def validation_scores(pipe, param_grid, X_train, y_train):
     skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
     results = {}
     for scorer in scorers:
-        grid_search = GridSearchCV(pipe, param_grid, cv=skf, scoring=scorer)
+        grid_search = GridSearchCV(estimator=pipe, param_grid=param_grid, cv=skf, scoring=scorer)
         grid_search.fit(X_train, y_train)
         results[scorer] = pd.DataFrame(grid_search.cv_results_)
     return results
