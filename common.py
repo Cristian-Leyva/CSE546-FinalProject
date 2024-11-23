@@ -53,3 +53,27 @@ def validation_scores(pipe, param_grid, X_train, y_train):
         grid_search.fit(X_train, y_train)
         results[scorer] = pd.DataFrame(grid_search.cv_results_)
     return results
+
+
+if __name__ == '__main__':
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.svm import SVC
+    from sklearn.pipeline import make_pipeline
+
+    df = load_data()
+    X_train, X_test, y_train, y_test = split_data(df)
+    print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
+
+    pipe = make_pipeline(
+        StandardScaler(),
+        SVC(random_state=0)
+    )
+    param_grid = {
+        'svc__C': [0.1, 1]
+    }
+    results = validation_scores(pipe, param_grid, X_train, y_train)
+    print('Validation results:')
+    print(results)
+
+    img = load_image(df.iloc[0]['image_name'], df.iloc[0]['class'])
+    show_image(img)
