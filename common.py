@@ -47,7 +47,7 @@ def split_data(df):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
     return X_train, X_test, y_train, y_test
 
-def validation_scores(pipe, param_grid, X_train, y_train):
+def validation_scores(pipe, param_grid, X_train, y_train, verbose=0):
     """ Create, run, and return cv_results_ for grid searches for all 3 scoring options """
     scorers = {
         'accuracy': 'accuracy',
@@ -60,7 +60,13 @@ def validation_scores(pipe, param_grid, X_train, y_train):
     skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
     results = {}
     for name, scorer in scorers.items():
-        grid_search = GridSearchCV(estimator=pipe, param_grid=param_grid, cv=skf, scoring=scorer)
+        grid_search = GridSearchCV(
+            estimator=pipe,
+            param_grid=param_grid,
+            cv=skf, scoring=scorer,
+            n_jobs=-1,
+            verbose=verbose
+        )
         grid_search.fit(X_train, y_train)
         results[name] = pd.DataFrame(grid_search.cv_results_)
     return results
