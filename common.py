@@ -72,6 +72,25 @@ def validation_scores(pipe, param_grid, X_train, y_train, verbose=0):
     return results
 
 
+def merge_results(results):
+    """Merged results from validation_scores function into a unified dataframe
+    that has a `scorer` column and all results.
+
+    Args:
+        results (dict): Dict of validation_scores results (scorer:DataFrame)
+
+    Returns:
+        DataFrame: DataFrame with all results combined, new column `scorer`
+    """
+    dataframes = []
+    for key, df in results.items():
+        df['scorer'] = key
+        dataframes.append(df)
+        
+    merged_df = pd.concat(dataframes, ignore_index=True)
+    return merged_df
+
+
 if __name__ == '__main__':
     from sklearn.preprocessing import StandardScaler
     from sklearn.svm import SVC
