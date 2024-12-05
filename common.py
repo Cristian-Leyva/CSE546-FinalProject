@@ -72,6 +72,31 @@ def validation_scores(pipe, param_grid, X_train, y_train, verbose=0):
     return results
 
 
+def validation_scores2(pipe, param_grid, X_train, y_train, verbose=0):
+    """ Create, run, and return cv_results_ for grid searches for all 3 scoring options """
+    scorers = {
+        'accuracy': 'accuracy',
+        'roc_auc': make_scorer(
+            roc_auc_score, multi_class='ovr', needs_proba=True
+        ),
+        'f1_score': make_scorer(f1_score, average='weighted')
+    }
+    # StratifiedKFold will ensure an equal distribution of the target classes
+    skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
+    results = {}
+    for name, scorer in scorers.items():
+        grid_search = GridSearchCV(
+            estimator=pipe,
+            param_grid=param_grid,
+            cv=skf, scoring=scorer,
+            n_jobs=-1,
+            verbose=verbose
+        )
+        grid_search.fit(X_train, y_train)
+        results[name] = pd.DataFrame(grid_search.cv_results_)
+    return results, grid_search
+
+
 def merge_results(results):
     """Merged results from validation_scores function into a unified dataframe
     that has a `scorer` column and all results.
