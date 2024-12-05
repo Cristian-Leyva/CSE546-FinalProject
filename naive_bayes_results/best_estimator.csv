@@ -1,0 +1,2 @@
+params,clustering,Accuracy,f1 Score,ROC AUC
+"{'feature_selection': VarianceThreshold(threshold=0.4), 'pca': PCA(n_components=32), 'scaler': StandardScaler()}",KMeans(n=5),0.8793103448275862,0.880117427078969,0.9854170019422662
